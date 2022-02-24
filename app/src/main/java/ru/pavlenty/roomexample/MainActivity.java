@@ -3,6 +3,13 @@ package ru.pavlenty.roomexample;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+
 import ru.pavlenty.roomexample.room.Task;
 
 import android.content.Intent;
@@ -35,9 +42,26 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        //getTasks();
+        final Disposable subscribe = DBClient.getInstance(getApplicationContext())
+                .getAppDatabase()
+                .taskDao()
+                .getAll()
+                // данные прийдут в основной поток
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<Task>>() {
+                    @Override
+                    public void accept(List<Task> tasks) {
+                        TaskAdapter adapter = new TaskAdapter(MainActivity.this, tasks);
+                        recyclerView.setAdapter(adapter);
+                    }
+                });
+
+
     }
 
-
+/*
     private void getTasks() {
         class GetTasks extends AsyncTask<Void, Void, List<Task>> {
 
@@ -55,11 +79,12 @@ public class MainActivity extends AppCompatActivity {
             protected void onPostExecute(List<Task> tasks) {
                 super.onPostExecute(tasks);
                 TaskAdapter adapter = new TaskAdapter(MainActivity.this, tasks);
-
+                recyclerView.setAdapter(adapter);
             }
         }
         GetTasks gt = new GetTasks();
         gt.execute();
     }
+*/
 
 }
